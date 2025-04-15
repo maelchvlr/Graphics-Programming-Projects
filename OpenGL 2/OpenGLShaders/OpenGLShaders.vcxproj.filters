@@ -51,6 +51,9 @@
     <ClCompile Include="SpotLight.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh.h">
@@ -86,12 +89,24 @@
     <ClInclude Include="SpotLight.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Shaders\shader.frag">
       <Filter>Shaders</Filter>
     </Text>
     <Text Include="Shaders\shader.vert">
+      <Filter>Shaders</Filter>
+    </Text>
+    <Text Include="Shaders\FluidSimulation.comp">
+      <Filter>Shaders</Filter>
+    </Text>
+    <Text Include="Shaders\particles.frag">
+      <Filter>Shaders</Filter>
+    </Text>
+    <Text Include="Shaders\particles.vert">
       <Filter>Shaders</Filter>
     </Text>
   </ItemGroup>

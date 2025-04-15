@@ -1,0 +1,135 @@
+// FluidSimulation.comp - SPH équilibré + correction de position v4
+#version 430
+
+layout(local_size_x = 256) in;
+
+#define H 0.25
+#define MASS 65.0
+#define REST_DENSITY 1000.0
+#define GAS_CONSTANT 3.0
+#define VISCOSITY 0.1
+#define EPSILON 0.0001
+#define BOUNDARY 1.5
+#define MAX_SPEED 2.0
+
+float poly6(float r2, float h) {
+    float coeff = 315.0 / (64.0 * 3.141592 * pow(h, 9.0));
+    return (r2 < h * h) ? coeff * pow(h * h - r2, 3.0) : 0.0;
+}
+
+vec3 spikyGradient(vec3 r, float h) {
+    float rLen = length(r);
+    if (rLen == 0.0) return vec3(0.0);
+    float coeff = -45.0 / (3.141592 * pow(h, 6.0));
+    return (rLen < h) ? coeff * pow(h - rLen, 2.0) * (r / rLen) : vec3(0.0);
+}
+
+vec3 viscosityLaplacian(vec3 r, float h) {
+    float rLen = length(r);
+    float coeff = 45.0 / (3.141592 * pow(h, 6.0));
+    return (rLen < h) ? coeff * (h - rLen) * vec3(1.0) : vec3(0.0);
+}
+
+struct Particle {
+    vec4 position;
+    vec4 velocity;
+    float density;
+    float pressure;
+};
+
+layout(std430, binding = 0) buffer ParticleBuffer {
+    Particle particles[];
+};
+
+uniform float deltaTime;
+uniform vec3 gravity = vec3(0.0, -9.81, 0.0);
+
+void main() {
+    uint id = gl_GlobalInvocationID.x;
+    if (id >= particles.length()) return;
+
+    Particle self = particles[id];
+
+    // === PASS 1: densité ===
+    float density = 0.0;
+    for (uint j = 0; j < particles.length(); ++j) {
+        vec3 r = self.position.xyz - particles[j].position.xyz;
+        float r2 = dot(r, r);
+        density += MASS * poly6(r2, H);
+    }
+    self.density = max(density, EPSILON);
+    self.pressure = max(GAS_CONSTANT * (self.density - REST_DENSITY), 0.0);
+
+    // === PASS 2: forces ===
+    vec3 fPressure = vec3(0.0);
+    vec3 fViscosity = vec3(0.0);
+
+    for (uint j = 0; j < particles.length(); ++j) {
+        if (id == j) continue;
+        vec3 r = self.position.xyz - particles[j].position.xyz;
+        float rLen = length(r);
+        if (rLen < H && rLen > EPSILON) {
+            float avgP = (self.pressure + particles[j].pressure) * 0.5;
+            vec3 grad = spikyGradient(r, H);
+            fPressure += -0.5 * MASS * (avgP / particles[j].density) * grad;
+
+            vec3 velDiff = particles[j].velocity.xyz - self.velocity.xyz;
+            vec3 lap = viscosityLaplacian(r, H);
+            fViscosity += VISCOSITY * MASS * (velDiff / particles[j].density) * lap;
+
+            // Correction de chevauchement
+            if (rLen < 0.01) {
+                vec3 dir = normalize(r);
+                self.position.xyz += 0.5 * dir * (0.01 - rLen);
+            }
+        }
+    }
+
+    vec3 fGravity = gravity * self.density;
+    vec3 totalForce = fPressure + fViscosity + fGravity;
+    vec3 acceleration = totalForce / self.density;
+    float maxAccel = 100.0;
+float accelLen = length(acceleration);
+if (accelLen > maxAccel) {
+    acceleration = normalize(acceleration) * maxAccel;
+}
+
+    // === INTÉGRATION ===
+    self.velocity.xyz += acceleration * deltaTime;
+    self.velocity.xyz *= 0.96;
+
+    float speed = length(self.velocity.xyz);
+    if (speed > MAX_SPEED) {
+        self.velocity.xyz = normalize(self.velocity.xyz) * MAX_SPEED;
+    }
+
+    self.position.xyz += self.velocity.xyz * deltaTime;
+
+    // Sol
+    if (self.position.y < 0.0) {
+        self.position.y = 0.0;
+        self.velocity.y *= -0.3;
+    }
+
+    // Murs XZ
+    if (self.position.x < -BOUNDARY) {
+        self.position.x = -BOUNDARY;
+        self.velocity.x *= -0.3;
+    }
+    if (self.position.x > BOUNDARY) {
+        self.position.x = BOUNDARY;
+        self.velocity.x *= -0.3;
+    }
+    if (self.position.z < -BOUNDARY) {
+        self.position.z = -BOUNDARY;
+        self.velocity.z *= -0.3;
+    }
+    if (self.position.z > BOUNDARY) {
+        self.position.z = BOUNDARY;
+        self.velocity.z *= -0.3;
+    }
+
+    self.position.y = max(self.position.y, 0.0);
+
+    particles[id] = self;
+}
