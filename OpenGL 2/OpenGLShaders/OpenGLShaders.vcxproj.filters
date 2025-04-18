@@ -54,6 +54,9 @@
     <ClCompile Include="Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ShadowMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh.h">
@@ -92,6 +95,9 @@
     <ClInclude Include="Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ShadowMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Shaders\shader.frag">
@@ -100,13 +106,10 @@
     <Text Include="Shaders\shader.vert">
       <Filter>Shaders</Filter>
     </Text>
-    <Text Include="Shaders\FluidSimulation.comp">
+    <Text Include="Shaders\directional_shadow_map.frag">
       <Filter>Shaders</Filter>
     </Text>
-    <Text Include="Shaders\particles.frag">
-      <Filter>Shaders</Filter>
-    </Text>
-    <Text Include="Shaders\particles.vert">
+    <Text Include="Shaders\directional_shadow_map.vert">
       <Filter>Shaders</Filter>
     </Text>
   </ItemGroup>
