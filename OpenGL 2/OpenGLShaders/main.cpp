@@ -250,7 +250,7 @@ void RenderPass(glm::mat4 viewMatrix, glm::mat4 projectionMatrix)
 
 	glm::vec3 lowerLight = camera.getCameraPosition();
 	lowerLight.y -= 0.3f;
-	//spotLights[0].SetFlash(lowerLight, camera.getCameraDirection());
+	spotLights[0].SetFlash(lowerLight, camera.getCameraDirection());
 
 	RenderScene();
 }
@@ -263,7 +263,7 @@ int main()
 	CreateObjects();
 	CreateShaders();
 
-	camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -60.0f, 0.0f, 5.0f, 0.5f);
+	camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -60.0f, 0.0f, 5.0f, 0.1f);
 
 	brickTexture = Texture("Textures/brick.png");
 	brickTexture.LoadTextureA();
@@ -326,6 +326,11 @@ int main()
 
 		// Get + Handle User Input
 		glfwPollEvents();
+		if (mainWindow.getKeys()[GLFW_KEY_F])
+		{
+			spotLights[0].Toggle();
+			mainWindow.getKeys()[GLFW_KEY_F] = false;
+		}
 
 		camera.keyControl(mainWindow.getKeys(), deltaTime);
 		camera.mouseControl(mainWindow.getXChange(), mainWindow.getYChange());
